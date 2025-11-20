@@ -1,0 +1,71 @@
+# Git Commit Messages for MLOps Project
+# Copy and paste these one by one as you commit your changes
+
+# Initial Setup
+git add .
+git commit -m "Initial project setup with folder structure"
+
+git add data/
+git commit -m "Downloaded and uploaded HAM10000 dataset"
+
+git add requirements.txt
+git commit -m "Added project dependencies in requirements.txt"
+
+# Model Development
+git add notebook/skin_cancer_dataset.ipynb
+git commit -m "Created Jupyter notebook for data exploration"
+
+git add notebook/skin_cancer_dataset.ipynb
+git commit -m "Added data visualizations to notebook"
+
+git add src/preprocessing.py
+git commit -m "Implemented data preprocessing module"
+
+git add src/model.py
+git commit -m "Created MobileNetV2 model architecture"
+
+git add notebook/skin_cancer_dataset.ipynb
+git commit -m "Trained model and evaluated performance metrics"
+
+git add models/
+git commit -m "Saved trained model and metadata"
+
+# API Development
+git add api.py
+git commit -m "Created FastAPI backend with prediction endpoint"
+
+git add api.py
+git commit -m "Added batch prediction support to API"
+
+git add api.py
+git commit -m "Implemented automatic retraining feature"
+
+# UI Development
+git add app.py
+git commit -m "Created Streamlit UI with dashboard pages"
+
+git add app.py
+git commit -m "Added single image prediction page"
+
+git add app.py
+git commit -m "Added batch prediction functionality to UI"
+
+git add app.py
+git commit -m "Implemented data upload and retraining interface"
+
+# Testing & Documentation
+git add locustfile.py
+git commit -m "Created Locust script for load testing"
+
+git add README.md
+git commit -m "Updated README with project documentation"
+
+git add Dockerfile docker-compose.yml
+git commit -m "Added Docker configuration for deployment"
+
+git add start.ps1
+git commit -m "Created startup script for easy launching"
+
+# Final commit
+git add .
+git commit -m "Final updates and bug fixes before submission"
