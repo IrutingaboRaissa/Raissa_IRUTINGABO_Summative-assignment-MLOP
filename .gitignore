@@ -44,11 +44,7 @@ archive/
 !data/test/.gitkeep
 !data/uploaded/.gitkeep
 
-# Models (keep structure but not weights)
-models/*.pth
-models/*.pkl
-models/*.h5
-models/*.tf
+# Models directory structure (model files now tracked with Git LFS)
 !models/.gitkeep
 
 # IDE
