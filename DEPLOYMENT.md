@@ -1,5 +1,15 @@
 # Deployment Guide
 
+## 🌐 Live Deployment
+
+**Current Deployment**: [https://raissa-irutingabo-summative-assignment.onrender.com](https://raissa-irutingabo-summative-assignment.onrender.com)
+
+**Platform**: Render.com (Free Tier)
+**Status**: ✅ Live and Operational
+**Deployment Method**: Docker Container with Git LFS for model files
+
+---
+
 ## Cloud Deployment Options
 
 ### Option 1: AWS EC2 Deployment
