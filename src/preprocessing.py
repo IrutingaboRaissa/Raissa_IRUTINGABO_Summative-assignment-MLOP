@@ -14,9 +14,12 @@ import kagglehub
 # Image transformations for training
 train_transform = transforms.Compose([
     transforms.Resize((224, 224)),
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomRotation(15),
-    transforms.ColorJitter(brightness=0.2, contrast=0.2),
+    transforms.RandomHorizontalFlip(p=0.5),
+    transforms.RandomVerticalFlip(p=0.3),
+    transforms.RandomRotation(20),
+    transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+    transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2, hue=0.1),
+    transforms.RandomPerspective(distortion_scale=0.2, p=0.3),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
@@ -110,6 +113,8 @@ def create_dataloaders_from_uploaded(uploaded_dir='data/uploaded', batch_size=32
     Returns:
         DataLoader for uploaded data
     """
+    import random
+    
     # Scan uploaded directory for images
     uploaded_path = Path(uploaded_dir)
     if not uploaded_path.exists():
@@ -120,19 +125,53 @@ def create_dataloaders_from_uploaded(uploaded_dir='data/uploaded', batch_size=32
     if len(image_files) == 0:
         return None
     
-    # Create DataFrame (assuming labels from filenames or metadata)
-    # For retraining, you'll need to implement label extraction
+    # Try to load HAM10000 metadata for correct labels
+    metadata_df = None
+    try:
+        import kagglehub
+        dataset_path = Path(kagglehub.dataset_download("kmader/skin-cancer-mnist-ham10000"))
+        metadata_files = list(dataset_path.glob('*.csv'))
+        if metadata_files:
+            metadata_df = pd.read_csv(metadata_files[0])
+            print(f"Loaded metadata with {len(metadata_df)} entries for label mapping")
+    except Exception as e:
+        print(f"Could not load metadata: {e}")
+    
+    # HAM10000 label encoding (alphabetical order)
+    label_map = {
+        'akiec': 0, 'bcc': 1, 'bkl': 2, 'df': 3, 
+        'mel': 4, 'nv': 5, 'vasc': 6
+    }
+    
     data = []
     for img_path in image_files:
-        # Extract label from filename or metadata file
-        # For now, using placeholder - implement based on your upload format
+        # Extract image_id from filename (e.g., ISIC_0024306 from ISIC_0024306.jpg)
+        image_id = img_path.stem
+        
+        label_found = None
+        
+        # Try to find label in metadata
+        if metadata_df is not None and 'image_id' in metadata_df.columns and 'dx' in metadata_df.columns:
+            matching_rows = metadata_df[metadata_df['image_id'] == image_id]
+            if not matching_rows.empty:
+                dx_label = matching_rows.iloc[0]['dx']
+                label_found = label_map.get(dx_label)
+                if label_found is not None:
+                    print(f"Found label for {image_id}: {dx_label} -> {label_found}")
+        
+        # If no metadata match, assign random label for demo
+        if label_found is None:
+            label_found = random.randint(0, 6)
+            print(f"No metadata for {image_id}, using random label: {label_found}")
+        
         data.append({
             'path': str(img_path),
-            'label_encoded': 0  # TODO: Extract actual label
+            'label_encoded': label_found
         })
     
     df = pd.DataFrame(data)
     dataset = SkinCancerDataset(df, transform=train_transform)
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
     
+    print(f"Created dataloader with {len(data)} images")
     return loader

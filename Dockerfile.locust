@@ -1,0 +1,14 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install locust
+RUN pip install --no-cache-dir locust requests pillow
+
+# Copy test files
+COPY tests/ ./tests/
+COPY data/test/ ./data/test/
+
+EXPOSE 8089
+
+CMD ["locust", "-f", "tests/locustfile.py", "--web-host=0.0.0.0"]

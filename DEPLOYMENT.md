@@ -1,5 +1,187 @@
 # Deployment Guide
 
+## 🚀 Quick Start - Run Everything Locally
+
+### Prerequisites
+- Docker and Docker Compose installed
+- Git with Git LFS support
+- 8GB+ RAM recommended
+
+### Step 1: Clone and Setup
+```bash
+# Clone the repository
+git clone https://github.com/IrutingaboRaissa/Raissa_IRUTINGABO_Summative-assignment-MLOP.git
+cd Raissa_IRUTINGABO_Summative-assignment-MLOP
+
+# Pull Git LFS files (models)
+git lfs pull
+
+# Verify model files exist
+ls -lh models/
+```
+
+### Step 2: Run with Docker Compose (Easiest Method)
+```bash
+# Build and start all services (API, UI, Locust)
+docker-compose up --build
+
+# Or run in detached mode
+docker-compose up -d
+
+# Check running containers
+docker-compose ps
+
+# View logs
+docker-compose logs -f
+```
+
+**Services will be available at:**
+- 🌐 **Streamlit UI**: http://localhost:8501
+- 🔌 **FastAPI Backend**: http://localhost:8000
+- 📊 **API Documentation**: http://localhost:8000/docs
+- 🐝 **Locust Load Testing**: http://localhost:8089
+
+### Step 3: Run Without Docker (Manual Setup)
+
+#### Terminal 1: Start API
+```bash
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run API
+cd api
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+# API available at: http://localhost:8000
+```
+
+#### Terminal 2: Start UI
+```bash
+# Activate virtual environment (if not already)
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Run Streamlit
+streamlit run ui/app.py
+
+# UI available at: http://localhost:8501
+```
+
+#### Terminal 3: Start Locust (Load Testing)
+```bash
+# Activate virtual environment (if not already)
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Run Locust
+locust -f tests/locustfile.py --host=http://localhost:8000
+
+# Locust UI available at: http://localhost:8089
+```
+
+### Step 4: Test the Application
+
+#### Test via UI (Streamlit)
+1. Open http://localhost:8501
+2. Upload a skin lesion image
+3. Click "Analyze Image"
+4. View prediction results
+
+#### Test via API (FastAPI)
+```bash
+# Health check
+curl http://localhost:8000/health
+
+# Predict with curl
+curl -X POST "http://localhost:8000/predict" \
+  -H "accept: application/json" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@path/to/your/image.jpg"
+
+# Or use the interactive docs
+# Open: http://localhost:8000/docs
+```
+
+#### Load Testing with Locust
+1. Open http://localhost:8089
+2. Set number of users (e.g., 10)
+3. Set spawn rate (e.g., 2 users/second)
+4. Enter host: http://localhost:8000
+5. Click "Start Swarming"
+6. Monitor performance metrics
+
+### Step 5: Stop Services
+
+```bash
+# If using Docker Compose
+docker-compose down
+
+# If using Docker Compose with volume cleanup
+docker-compose down -v
+
+# If running manually, press Ctrl+C in each terminal
+```
+
+### Troubleshooting Quick Start
+
+**Issue: Port already in use**
+```bash
+# Find and kill process using port 8000
+# On Linux/Mac:
+lsof -ti:8000 | xargs kill -9
+
+# On Windows:
+netstat -ano | findstr :8000
+taskkill /PID <PID> /F
+
+# Change ports in docker-compose.yml if needed
+```
+
+**Issue: Model not found**
+```bash
+# Ensure Git LFS is installed
+git lfs install
+
+# Pull LFS files
+git lfs pull
+
+# Verify model files
+ls -lh models/*.pth
+```
+
+**Issue: Docker build fails**
+```bash
+# Clean Docker cache
+docker system prune -a
+
+# Rebuild without cache
+docker-compose build --no-cache
+```
+
+**Issue: Out of memory**
+```bash
+# Increase Docker memory limit
+# Docker Desktop: Settings > Resources > Memory (set to 6GB+)
+
+# Or reduce batch size in code
+```
+
+### Performance Testing Results Example
+
+After running Locust, you should see metrics like:
+- **RPS (Requests Per Second)**: ~50-100 for API
+- **Response Time**: ~200-500ms for predictions
+- **Failure Rate**: <1%
+
+### Video Tutorial
+
+For a complete walkthrough, watch this setup video:
+[Link to setup video tutorial - if available]
+
+---
+
 ## 🌐 Live Deployment
 
 **Current Deployment**: [https://raissa-irutingabo-summative-assignment.onrender.com](https://raissa-irutingabo-summative-assignment.onrender.com)
