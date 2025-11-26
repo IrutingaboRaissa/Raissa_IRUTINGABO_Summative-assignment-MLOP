@@ -51,11 +51,24 @@ st.markdown("""
         margin-bottom: 2rem;
     }
     .feature-box {
-        background-color: #f8f9fa;
-        padding: 1.5rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #667eea;
+        background-color: #ffffff;
+        padding: 2rem;
+        border-radius: 0.8rem;
+        border: 2px solid #667eea;
         margin: 1rem 0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        min-height: 200px;
+    }
+    .feature-box h3 {
+        color: #667eea;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        font-weight: bold;
+    }
+    .feature-box p {
+        color: #333333;
+        font-size: 1rem;
+        line-height: 1.6;
     }
     .stats-box {
         background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -64,6 +77,15 @@ st.markdown("""
         color: white;
         text-align: center;
         margin: 1rem 0;
+    }
+    .stats-box h2 {
+        font-size: 2.5rem;
+        margin: 0;
+        font-weight: bold;
+    }
+    .stats-box p {
+        font-size: 1rem;
+        margin: 0.5rem 0 0 0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -268,7 +290,7 @@ if page == "Home":
         st.markdown("""
         <div class="feature-box">
             <h3>Real-Time Prediction</h3>
-            <p>Upload images and get instant AI-powered diagnosis with confidence scores and detailed medical information.</p>
+            <p>Upload skin lesion images and receive instant AI-powered diagnosis with confidence scores, probability distributions, and detailed medical information for all 7 lesion types.</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -276,7 +298,7 @@ if page == "Home":
         st.markdown("""
         <div class="feature-box">
             <h3>Comprehensive Analytics</h3>
-            <p>Visualize dataset insights, model performance, and prediction distributions with interactive charts.</p>
+            <p>Visualize dataset insights with interactive charts showing class distribution, age patterns, anatomical locations, and model performance metrics over time.</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -284,7 +306,7 @@ if page == "Home":
         st.markdown("""
         <div class="feature-box">
             <h3>Automated Retraining</h3>
-            <p>Upload new data and trigger model retraining to continuously improve accuracy over time.</p>
+            <p>Upload new labeled data and trigger model retraining with a single click. The system automatically retrains after every 10 uploads to continuously improve accuracy.</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -565,109 +587,69 @@ elif page == "Model Status":
     health = get_health_status()
     metrics = get_metrics()
     
-    # Add detailed error information
-    if "error" in health:
-        st.error(f"""
-        **Cannot Connect to API**
-        
-        Error: {health['error']}
-        
-        **Troubleshooting:**
-        1. Check if API is running: `python main.py api`
-        2. Verify API URL: {API_URL}
-        3. Check firewall settings
-        4. For deployed version, check server status on Render.com
-        """)
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        if "error" not in health:
-            status = "Online" if health.get("status") == "healthy" else "Offline"
-            st.metric("Status", status)
-        else:
-            st.metric("Status", "Error")
-    
-    with col2:
-        if "error" not in metrics:
-            uptime_hours = metrics.get("uptime_seconds", 0) / 3600
-            st.metric("Uptime", f"{uptime_hours:.2f} hrs")
-        else:
-            st.metric("Uptime", "N/A")
-    
-    with col3:
-        if "error" not in health:
-            device = health.get("device", "Unknown")
-            st.metric("Device", device)
-        else:
-            st.metric("Device", "N/A")
-    
-    with col4:
-        if "error" not in health:
-            model_loaded = health.get("model_loaded", False)
-            if model_loaded:
-                st.metric("Model Loaded", "Yes", delta="Ready")
-            else:
-                st.metric("Model Loaded", "No", delta="Error", delta_color="inverse")
-                st.error("Model is not loaded! Check server logs.")
-        else:
-            st.metric("Model Loaded", "No")
-    
-    # Add model diagnostics section
+    # Add model loading status check
     if "error" not in health:
-        st.subheader("Model Diagnostics")
-        
         model_loaded = health.get("model_loaded", False)
-        
-        if model_loaded:
-            st.success("✅ Model is loaded and ready for predictions")
-        else:
+        if not model_loaded:
             st.error("""
-            ❌ **Model Loading Failed**
+            **⚠️ MODEL NOT LOADED**
             
-            **Common causes:**
+            The model is not currently loaded on the server. This could be due to:
             
-            1. **Model file not found**
-               - Path: `models/skin_cancer_classifier.pth`
-               - Solution: Run training notebook first or check Git LFS
+            1. **Server just started** - Wait 2-3 minutes for model to load
+            2. **Model file missing** - Model files not uploaded to server
+            3. **Out of memory** - Server doesn't have enough RAM (need 2GB+)
+            4. **Wrong file path** - Model path configuration incorrect
             
-            2. **Git LFS not configured** (for Render deployment)
-               ```bash
-               git lfs install
-               git lfs track "*.pth"
-               git lfs pull
-               git add .gitattributes
-               git commit -m "Configure Git LFS"
-               git push
-               ```
+            **For Render.com deployment:**
+            - Make sure Git LFS is properly configured
+            - Run: `git lfs pull` to download model files
+            - Verify `models/skin_cancer_classifier.pth` exists
+            - Check server logs for errors
             
-            3. **Insufficient memory**
-               - ResNet50 needs ~500MB RAM minimum
-               - Render free tier has 512MB (might not be enough)
-               - Upgrade to paid tier with 2GB+ RAM
-            
-            4. **File permissions**
-               - Check file exists: `ls -lh models/`
-               - Check permissions: `chmod 644 models/*.pth`
-            
-            **Check server logs:**
-            - Local: Check terminal where API is running
-            - Render: Dashboard → Logs tab
+            **For local deployment:**
+            - Ensure model was trained first (run notebook)
+            - Check `models/` directory exists with .pth file
+            - Restart the API: `python main.py api`
             """)
-        
-        # Show model path from API
-        st.info(f"**Expected model path:** models/skin_cancer_classifier.pth")
-        
-    # Uptime Chart
-    st.subheader("Model Uptime Visualization")
+    
+    # Health and Metrics
+    st.subheader("API Health Status")
+    
+    if "error" not in health:
+        st.success("API is healthy and running")
+    else:
+        st.error(f"Error: {health['error']}")
+    
+    st.subheader("Model Metrics")
+    
     if "error" not in metrics:
-        uptime_data = pd.DataFrame({
-            "Time": [datetime.now() - timedelta(seconds=metrics.get("uptime_seconds", 0)), datetime.now()],
-            "Status": ["Started", "Current"]
-        })
-        fig = go.Figure(data=[go.Scatter(x=uptime_data["Time"], y=[1, 1], mode='lines+markers', name='Uptime')])
-        fig.update_layout(title="Model Uptime Timeline", xaxis_title="Time", yaxis_title="Status")
-        st.plotly_chart(fig, use_container_width=True)
+        st.metric("Total Predictions", metrics.get("total_predictions", 0))
+        st.metric("Uptime", f"{metrics.get('uptime_seconds', 0) / 3600:.1f} hours")
+    else:
+        st.error(f"Error: {metrics['error']}")
+    
+    # Retrain Status
+    st.subheader("Model Retraining Status")
+    
+    retrain_status = get_retrain_status()
+    
+    if "error" not in retrain_status:
+        st.info(f"Last retrain: {retrain_status.get('last_retrain', 'Never')}")
+        st.info(f"Status: {retrain_status.get('status_message', 'Unknown')}")
+    else:
+        st.error(f"Error: {retrain_status['error']}")
+    
+    # Manual retrain button
+    if st.button("Trigger Manual Retrain"):
+        with st.spinner("Triggering retrain..."):
+            result = trigger_retraining()
+            
+            if "error" in result:
+                st.error(f"Retrain failed: {result['error']}")
+            else:
+                st.success("Retraining triggered successfully!")
+                st.info("Check status updates above.")
 
 # Page: Single Prediction
 elif page == "Single Prediction":

@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: skin-cancer-api
+    env: docker
+    repo: https://github.com/IrutingaboRaissa/Raissa_IRUTINGABO_Summative-assignment-MLOP
+    branch: main
+    envVars:
+      - key: GIT_LFS_ENABLED
+        value: 1
