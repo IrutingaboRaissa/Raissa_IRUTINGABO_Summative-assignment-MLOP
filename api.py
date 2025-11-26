@@ -1,7 +1,3 @@
-"""
-FastAPI application for skin cancer classification
-Provides endpoints for prediction, bulk upload, and model retraining
-"""
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -359,8 +355,8 @@ async def retrain_task():
         retrained_model, metrics = retrain_model(
             predictor.model,
             new_data_loader,
-            num_epochs=5,
-            learning_rate=0.0001,
+            num_epochs=10,
+            learning_rate=0.00005,
             device=device
         )
         

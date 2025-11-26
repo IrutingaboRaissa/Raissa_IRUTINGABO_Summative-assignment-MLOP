@@ -18,6 +18,8 @@ import random
 
 # API Configuration
 API_URL = "http://localhost:8000"
+# For deployed version, uncomment this:
+# API_URL = "https://raissa-irutingabo-summative-assignment.onrender.com"
 
 # Page configuration
 st.set_page_config(
@@ -40,6 +42,28 @@ st.markdown("""
         padding: 1rem;
         border-radius: 0.5rem;
         margin: 0.5rem 0;
+    }
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 3rem;
+        border-radius: 1rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+    .feature-box {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        border-left: 4px solid #667eea;
+        margin: 1rem 0;
+    }
+    .stats-box {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        padding: 2rem;
+        border-radius: 1rem;
+        color: white;
+        text-align: center;
+        margin: 1rem 0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -70,7 +94,9 @@ def predict_image(image_file):
         response = requests.post(f"{API_URL}/predict", files=files, timeout=120)
         
         # Check if response is successful
-        if response.status_code != 200:
+        if response.status_code == 503:
+            return {"error": "Model not loaded on server. The server may be starting up or model files are missing. Please wait a few minutes and try again."}
+        elif response.status_code != 200:
             return {"error": f"API returned status {response.status_code}: {response.text}"}
         
         # Try to parse JSON
@@ -177,20 +203,383 @@ def get_class_info(class_code):
 
 
 # Main UI
-st.markdown('<h1 class="main-header">Skin Cancer Classification Dashboard</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header">AI-Powered Skin Cancer Detection System</h1>', unsafe_allow_html=True)
 
 # Sidebar
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Model Status", "Single Prediction", "Batch Prediction", "Dataset Visualizations", "Data Upload & Retraining"])
+page = st.sidebar.radio("Go to", ["Home", "Model Status", "Single Prediction", "Batch Prediction", "Dataset Visualizations", "Data Upload & Retraining"])
 
-# Page: Model Status
-if page == "Model Status":
-    st.header("Model Status & Uptime")
+# Page: Home
+if page == "Home":
+    # Hero Section
+    st.markdown("""
+    <div class="hero-section">
+        <h2>Welcome to the Skin Cancer Classification MLOps Platform</h2>
+        <p style="font-size: 1.2rem; margin-top: 1rem;">
+            An end-to-end Machine Learning Operations system for automated skin lesion classification 
+            using deep learning and computer vision.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    col1, col2, col3, col4 = st.columns(4)
+    # Project Overview
+    st.header("Project Overview")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        ### What This System Does
+        
+        This platform leverages **Convolutional Neural Networks (CNN)** and the **ResNet50** architecture 
+        to analyze dermatoscopic images and classify seven types of skin lesions:
+        
+        1. **Melanocytic Nevi (nv)** - Common moles
+        2. **Melanoma (mel)** - Most dangerous skin cancer
+        3. **Benign Keratosis (bkl)** - Non-cancerous growths
+        4. **Basal Cell Carcinoma (bcc)** - Common skin cancer
+        5. **Actinic Keratoses (akiec)** - Pre-cancerous lesions
+        6. **Vascular Lesions (vasc)** - Blood vessel abnormalities
+        7. **Dermatofibroma (df)** - Benign fibrous nodules
+        """)
+    
+    with col2:
+        st.markdown("""
+        ### Why This Matters
+        
+        **Early Detection Saves Lives**
+        - Skin cancer is the most common cancer worldwide
+        - Early detection increases survival rate to 99%
+        - AI can assist dermatologists in faster, more accurate diagnosis
+        
+        **MLOps Best Practices**
+        - Automated model training and retraining
+        - Real-time prediction API
+        - Performance monitoring and metrics
+        - Scalable deployment architecture
+        """)
+    
+    # Key Features
+    st.header("Key Features")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        <div class="feature-box">
+            <h3>Real-Time Prediction</h3>
+            <p>Upload images and get instant AI-powered diagnosis with confidence scores and detailed medical information.</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div class="feature-box">
+            <h3>Comprehensive Analytics</h3>
+            <p>Visualize dataset insights, model performance, and prediction distributions with interactive charts.</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div class="feature-box">
+            <h3>Automated Retraining</h3>
+            <p>Upload new data and trigger model retraining to continuously improve accuracy over time.</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # System Architecture
+    st.header("System Architecture")
+    
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        st.markdown("""
+        ### MLOps Pipeline
+        
+        ```
+        Data Acquisition (HAM10000 Dataset)
+                    ↓
+        Data Preprocessing & Augmentation
+                    ↓
+        Model Training (ResNet50 + Transfer Learning)
+                    ↓
+        Model Evaluation (Accuracy, F1, Precision, Recall)
+                    ↓
+        API Deployment (FastAPI)
+                    ↓
+        Web Interface (Streamlit)
+                    ↓
+        Monitoring & Logging
+                    ↓
+        Continuous Retraining
+        ```
+        
+        **Technology Stack:**
+        - **Deep Learning**: PyTorch, ResNet50
+        - **Backend API**: FastAPI
+        - **Frontend**: Streamlit
+        - **Load Testing**: Locust
+        - **Deployment**: Docker, Docker Compose
+        - **Dataset**: HAM10000 (10,015 images)
+        """)
+    
+    with col2:
+        st.markdown("""
+        ### Model Specifications
+        
+        **Architecture:**
+        - ResNet50 (Pre-trained on ImageNet)
+        - Custom classifier head
+        - Input size: 224×224×3
+        
+        **Training:**
+        - Optimizer: Adam
+        - Learning Rate: 0.001
+        - Batch Size: 32
+        - Data Augmentation: Yes
+        - Early Stopping: Yes
+        
+        **Performance:**
+        - Accuracy: ~90%+
+        - Classes: 7
+        - Inference Time: <100ms
+        """)
+    
+    # Live System Status
+    st.header("Live System Status")
     
     health = get_health_status()
     metrics = get_metrics()
+    
+    # Add model loading status check
+    if "error" not in health:
+        model_loaded = health.get("model_loaded", False)
+        if not model_loaded:
+            st.error("""
+            **⚠️ MODEL NOT LOADED**
+            
+            The model is not currently loaded on the server. This could be due to:
+            
+            1. **Server just started** - Wait 2-3 minutes for model to load
+            2. **Model file missing** - Model files not uploaded to server
+            3. **Out of memory** - Server doesn't have enough RAM (need 2GB+)
+            4. **Wrong file path** - Model path configuration incorrect
+            
+            **For Render.com deployment:**
+            - Make sure Git LFS is properly configured
+            - Run: `git lfs pull` to download model files
+            - Verify `models/skin_cancer_classifier.pth` exists
+            - Check server logs for errors
+            
+            **For local deployment:**
+            - Ensure model was trained first (run notebook)
+            - Check `models/` directory exists with .pth file
+            - Restart the API: `python main.py api`
+            """)
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        if "error" not in health:
+            status = health.get("status") == "healthy"
+            if status:
+                st.markdown("""
+                <div class="stats-box" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                    <h2>ONLINE</h2>
+                    <p>System Healthy</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown("""
+                <div class="stats-box" style="background: linear-gradient(135deg, #fc4a1a 0%, #f7b733 100%);">
+                    <h2>OFFLINE</h2>
+                    <p>System Down</p>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.markdown("""
+            <div class="stats-box" style="background: linear-gradient(135deg, #fc4a1a 0%, #f7b733 100%);">
+                <h2>ERROR</h2>
+                <p>Cannot Connect</p>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    with col2:
+        if "error" not in metrics:
+            total_preds = metrics.get("total_predictions", 0)
+            st.markdown(f"""
+            <div class="stats-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h2>{total_preds}</h2>
+                <p>Total Predictions</p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown("""
+            <div class="stats-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h2>N/A</h2>
+                <p>Total Predictions</p>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    with col3:
+        if "error" not in health:
+            device = health.get("device", "Unknown").upper()
+            st.markdown(f"""
+            <div class="stats-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <h2>{device}</h2>
+                <p>Processing Device</p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown("""
+            <div class="stats-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <h2>N/A</h2>
+                <p>Processing Device</p>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    with col4:
+        if "error" not in metrics:
+            uptime_hours = metrics.get("uptime_seconds", 0) / 3600
+            st.markdown(f"""
+            <div class="stats-box" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <h2>{uptime_hours:.1f}h</h2>
+                <p>System Uptime</p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown("""
+            <div class="stats-box" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <h2>N/A</h2>
+                <p>System Uptime</p>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Quick Start Guide
+    st.header("Quick Start Guide")
+    
+    st.markdown("""
+    ### How to Use This System
+    
+    1. **Check Model Status** - View system health, uptime, and performance metrics
+    
+    2. **Make a Prediction** - Upload a single image for instant AI diagnosis
+       - Supported formats: JPG, JPEG, PNG
+       - Get detailed medical information and confidence scores
+    
+    3. **Batch Processing** - Upload multiple images for bulk analysis
+       - Process up to 50 images at once
+       - Export results as CSV for record-keeping
+    
+    4. **Explore Visualizations** - Understand the dataset and model behavior
+       - Class distribution analysis
+       - Age and location patterns
+       - Performance metrics
+    
+    5. **Retrain the Model** - Upload new data to improve accuracy
+       - Automatic retraining after 10 uploads
+       - Manual retraining trigger available
+    
+    6. **Load Testing** - Test system performance under stress
+       - Use Locust to simulate multiple users
+       - Monitor response times and throughput
+    """)
+    
+    # Project Highlights
+    st.header("Project Highlights")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.info("""
+        **Dataset**
+        
+        HAM10000 Dataset
+        - 10,015 dermatoscopic images
+        - 7 diagnostic categories
+        - High-quality medical imagery
+        - Real-world clinical data
+        """)
+    
+    with col2:
+        st.success("""
+        **Model Performance**
+        
+        ResNet50 CNN
+        - 90%+ accuracy
+        - Transfer learning
+        - <100ms inference time
+        - Production-ready
+        """)
+    
+    with col3:
+        st.warning("""
+        **MLOps Features**
+        
+        Full Pipeline
+        - Automated training
+        - API monitoring
+        - Load testing ready
+        - Continuous deployment
+        """)
+    
+    # Important Disclaimer
+    st.header("Important Medical Disclaimer")
+    
+    st.error("""
+    **MEDICAL DISCLAIMER**
+    
+    This system is an **AI-assisted diagnostic tool** and should **NOT** be used as a substitute 
+    for professional medical advice, diagnosis, or treatment.
+    
+    **DO:**
+    - Use this as a screening tool
+    - Consult a qualified dermatologist
+    - Get professional medical opinion
+    - Monitor changes in skin lesions
+    
+    **DON'T:**
+    - Rely solely on AI predictions
+    - Delay seeking medical attention
+    - Self-diagnose serious conditions
+    - Ignore suspicious lesions
+    
+    **Always consult a healthcare professional for accurate diagnosis and treatment.**
+    """)
+    
+    # Call to Action
+    st.markdown("---")
+    st.markdown("""
+    ### Ready to Get Started?
+    
+    Use the **navigation menu on the left** to explore different features of the system.
+    
+    **New users?** Start with **Single Prediction** to see the AI in action!
+    """)
+
+# Page: Model Status
+elif page == "Model Status":
+    st.header("Model Status & Uptime")
+    
+    health = get_health_status()
+    metrics = get_metrics()
+    
+    # Add detailed error information
+    if "error" in health:
+        st.error(f"""
+        **Cannot Connect to API**
+        
+        Error: {health['error']}
+        
+        **Troubleshooting:**
+        1. Check if API is running: `python main.py api`
+        2. Verify API URL: {API_URL}
+        3. Check firewall settings
+        4. For deployed version, check server status on Render.com
+        """)
+    
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         if "error" not in health:
@@ -215,11 +604,60 @@ if page == "Model Status":
     
     with col4:
         if "error" not in health:
-            model_loaded = "Yes" if health.get("model_loaded") else "No"
-            st.metric("Model Loaded", model_loaded)
+            model_loaded = health.get("model_loaded", False)
+            if model_loaded:
+                st.metric("Model Loaded", "Yes", delta="Ready")
+            else:
+                st.metric("Model Loaded", "No", delta="Error", delta_color="inverse")
+                st.error("Model is not loaded! Check server logs.")
         else:
             st.metric("Model Loaded", "No")
     
+    # Add model diagnostics section
+    if "error" not in health:
+        st.subheader("Model Diagnostics")
+        
+        model_loaded = health.get("model_loaded", False)
+        
+        if model_loaded:
+            st.success("✅ Model is loaded and ready for predictions")
+        else:
+            st.error("""
+            ❌ **Model Loading Failed**
+            
+            **Common causes:**
+            
+            1. **Model file not found**
+               - Path: `models/skin_cancer_classifier.pth`
+               - Solution: Run training notebook first or check Git LFS
+            
+            2. **Git LFS not configured** (for Render deployment)
+               ```bash
+               git lfs install
+               git lfs track "*.pth"
+               git lfs pull
+               git add .gitattributes
+               git commit -m "Configure Git LFS"
+               git push
+               ```
+            
+            3. **Insufficient memory**
+               - ResNet50 needs ~500MB RAM minimum
+               - Render free tier has 512MB (might not be enough)
+               - Upgrade to paid tier with 2GB+ RAM
+            
+            4. **File permissions**
+               - Check file exists: `ls -lh models/`
+               - Check permissions: `chmod 644 models/*.pth`
+            
+            **Check server logs:**
+            - Local: Check terminal where API is running
+            - Render: Dashboard → Logs tab
+            """)
+        
+        # Show model path from API
+        st.info(f"**Expected model path:** models/skin_cancer_classifier.pth")
+        
     # Uptime Chart
     st.subheader("Model Uptime Visualization")
     if "error" not in metrics:

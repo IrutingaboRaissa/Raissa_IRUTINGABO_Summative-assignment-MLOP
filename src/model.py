@@ -146,13 +146,18 @@ def save_model(model, optimizer, num_classes, accuracy, epoch, model_path='../mo
     """Save trained model"""
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
     
-    torch.save({
+    checkpoint = {
         'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict(),
         'num_classes': num_classes,
         'accuracy': accuracy,
         'epoch': epoch,
-    }, model_path)
+    }
+    
+    # Only save optimizer if provided
+    if optimizer is not None:
+        checkpoint['optimizer_state_dict'] = optimizer.state_dict()
+    
+    torch.save(checkpoint, model_path)
     
     print(f"Model saved to {model_path}")
 

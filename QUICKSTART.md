@@ -1,189 +1,137 @@
-# Quick Start Guide - Skin Cancer Classification System
+# 🚀 Quick Start Guide
 
-This guide will get your system up and running in **15 minutes**.
+Get the Skin Cancer Detection app running in 5 minutes!
 
-## Prerequisites Checklist
+## Option 1: Docker Compose (Recommended - One Command!)
 
-- [ ] Python 3.9+ installed
-- [ ] Git installed
-- [ ] 4GB+ RAM available
-- [ ] Internet connection (for first-time setup)
-
-## Step-by-Step Setup
-
-### 1. Clone and Navigate (2 minutes)
-
-```powershell
+```bash
+# Clone repository
 git clone https://github.com/IrutingaboRaissa/Raissa_IRUTINGABO_Summative-assignment-MLOP.git
 cd Raissa_IRUTINGABO_Summative-assignment-MLOP
+
+# Start everything
+docker-compose up
 ```
 
-### 2. Install Dependencies (3 minutes)
+**That's it!** Now open:
+- UI: http://localhost:8501
+- API: http://localhost:8000/docs
+- Locust: http://localhost:8089
 
-```powershell
-# Create virtual environment
+## Option 2: Manual Setup (3 Terminals)
+
+### Terminal 1 - API 🔌
+```bash
 python -m venv venv
-
-# Activate it
-.\venv\Scripts\Activate.ps1
-
-# Install packages
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+cd api
+uvicorn main:app --reload
 ```
 
-### 3. Verify Model Exists (1 minute)
-
-```powershell
-# Check if model file exists
-ls .\models\skin_cancer_classifier.pth
-
-# If missing, you need to train the model first
-# See section "Training Your First Model" below
+### Terminal 2 - UI 🌐
+```bash
+source venv/bin/activate  # Windows: venv\Scripts\activate
+streamlit run ui/app.py
 ```
 
-### 4. Start the API (1 minute)
-
-```powershell
-# Open Terminal 1
-python api.py
-
-# Wait for message: "Uvicorn running on http://127.0.0.1:8000"
-# Keep this terminal open!
+### Terminal 3 - Locust 🐝
+```bash
+source venv/bin/activate  # Windows: venv\Scripts\activate
+locust -f tests/locustfile.py --host=http://localhost:8000
 ```
 
-### 5. Start the UI (1 minute)
+## 🧪 Quick Test
 
-```powershell
-# Open Terminal 2 (NEW window)
-.\venv\Scripts\Activate.ps1
-streamlit run app.py
+### Test via UI
+1. Go to http://localhost:8501
+2. Upload image from `data/test/` folder
+3. Click "Analyze Image"
+4. See results!
 
-# Wait for message: "You can now view your Streamlit app in your browser"
-# Browser should open automatically to http://localhost:8501
+### Test via API
+```bash
+curl -X POST "http://localhost:8000/predict" \
+  -F "file=@data/test/sample_image.jpg"
 ```
 
-### 6. Test the System (2 minutes)
+### Load Test with Locust
+1. Go to http://localhost:8089
+2. Number of users: 10
+3. Spawn rate: 2
+4. Host: http://localhost:8000
+5. Start swarming!
 
-1. Open browser to: http://localhost:8501
-2. Click "Single Prediction" in sidebar
-3. Upload a test image from `data/test/` (if available) or any skin lesion image
-4. Click "Predict"
-5. View the diagnosis results!
+## 📊 What You'll See
 
-## Training Your First Model (Optional - 30-60 minutes)
+### Streamlit UI
+- Image upload interface
+- Real-time predictions
+- Confidence scores
+- Visual feedback
 
-If model file doesn't exist, train it using the notebook:
+### FastAPI Docs
+- Interactive API documentation
+- Try endpoints directly
+- See request/response schemas
 
-1. Open Jupyter:
-   ```powershell
-   jupyter notebook
-   ```
+### Locust Dashboard
+- Requests per second (RPS)
+- Response times
+- Failure rates
+- Charts and graphs
 
-2. Navigate to `notebook/skin_cancer_dataset.ipynb`
+## 🛑 Stop Everything
 
-3. Click **Cell > Run All**
+```bash
+# Docker:
+docker-compose down
 
-4. Wait for training to complete (~30 mins on CPU, ~10 mins on GPU)
-
-5. Model will be saved to `models/skin_cancer_classifier.pth`
-
-6. Return to Step 4 above to start the API
-
-## Common Issues & Solutions
-
-### Issue: "ModuleNotFoundError"
-**Solution:** Make sure virtual environment is activated and requirements installed:
-```powershell
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+# Manual: Press Ctrl+C in each terminal
 ```
 
-### Issue: "Model file not found"
-**Solution:** Train the model using the notebook (see "Training Your First Model" above)
+## ⚡ Common Issues
 
-### Issue: "Port already in use"
-**Solution:** 
-```powershell
-# For API (port 8000)
-Get-Process -Id (Get-NetTCPConnection -LocalPort 8000).OwningProcess | Stop-Process
-
-# For UI (port 8501)
-Get-Process -Id (Get-NetTCPConnection -LocalPort 8501).OwningProcess | Stop-Process
+**Port 8000 busy?**
+```bash
+# Kill process
+lsof -ti:8000 | xargs kill -9  # Mac/Linux
+# Or change port in docker-compose.yml
 ```
 
-### Issue: "API is not responding"
-**Solution:** Check API terminal for errors. Most common:
-- Model file missing (train the model)
-- Wrong Python version (use 3.9+)
-- Dependencies not installed
-
-## Next Steps
-
-Once system is running:
-
-1. **Explore Features:**
-   - Model Status Dashboard
-   - Single Image Prediction
-   - Batch Prediction
-   - Data Visualizations
-   - Upload & Retrain
-
-2. **Run Load Tests:** See [LOAD_TESTING.md](LOAD_TESTING.md)
-
-3. **Deploy to Cloud:** See main README for deployment instructions
-
-4. **Record Demo Video:** Test all features, then record your demonstration
-
-## Quick Commands Reference
-
-```powershell
-# Activate environment
-.\venv\Scripts\Activate.ps1
-
-# Start API
-python api.py
-
-# Start UI (new terminal)
-streamlit run app.py
-
-# Run load test
-locust -f locustfile.py --host=http://localhost:8000
-
-# Stop all Python processes
-Get-Process python | Stop-Process -Force
+**Models missing?**
+```bash
+git lfs pull
+ls -lh models/  # Should see *.pth files
 ```
 
-## System Architecture
+**Docker out of memory?**
+- Increase Docker memory to 6GB+
+- Docker Desktop → Settings → Resources
 
-```
-┌─────────────┐     HTTP      ┌──────────────┐
-│   Browser   │ ───────────> │  Streamlit   │
-│  (User UI)  │               │  (Port 8501) │
-└─────────────┘               └──────────────┘
-                                      │
-                                      │ REST API
-                                      ▼
-                              ┌──────────────┐
-                              │   FastAPI    │
-                              │  (Port 8000) │
-                              └──────────────┘
-                                      │
-                                      │
-                                      ▼
-                              ┌──────────────┐
-                              │  PyTorch     │
-                              │  Model (.pth)│
-                              └──────────────┘
-```
+## 🎯 Next Steps
 
-## Support
+1. ✅ Run the app (you're here!)
+2. 📖 Read [DEPLOYMENT.md](DEPLOYMENT.md) for cloud deployment
+3. 🧪 Check [tests/](tests/) for more testing options
+4. 📊 Review [docs/](docs/) for model details
 
-For issues or questions:
-1. Check the main [README.md](README.md) for detailed documentation
-2. Review error messages in terminal
-3. Ensure all prerequisites are met
-4. Verify Python version: `python --version` (should be 3.9+)
+## 💡 Tips
+
+- Use Chrome/Firefox for best UI experience
+- Upload images in JPG/PNG format
+- Keep images under 10MB
+- Check logs if something fails:
+  ```bash
+  docker-compose logs -f
+  ```
+
+## 🆘 Need Help?
+
+- Check [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions
+- Review [README.md](README.md) for project overview
+- Open an issue on GitHub
 
 ---
 
-**Ready to go? Start with Step 1!** 🚀
+**Ready to deploy to production?** Check [DEPLOYMENT.md](DEPLOYMENT.md) for AWS, GCP, Azure, and Heroku guides!

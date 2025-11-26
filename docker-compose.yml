@@ -2,44 +2,49 @@ version: '3.8'
 
 services:
   api:
-    build: .
-    container_name: skin_cancer_api
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
       - ./models:/app/models
       - ./data:/app/data
-      - ./src:/app/src
     environment:
+      - MODEL_PATH=/app/models/skin_cancer_model.pth
       - PYTHONUNBUFFERED=1
-    command: uvicorn api:app --host 0.0.0.0 --port 8000 --reload
-    networks:
-      - app-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
 
   ui:
-    build: .
-    container_name: skin_cancer_ui
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
     ports:
       - "8501:8501"
-    volumes:
-      - ./app.py:/app/app.py
+    environment:
+      - API_URL=http://api:8000
+      - PYTHONUNBUFFERED=1
     depends_on:
       - api
+    command: streamlit run ui/app.py --server.port=8501 --server.address=0.0.0.0
+
+  locust:
+    build:
+      context: .
+      dockerfile: Dockerfile.locust
+    ports:
+      - "8089:8089"
     environment:
-      - PYTHONUNBUFFERED=1
-    command: streamlit run app.py --server.port 8501 --server.address 0.0.0.0
-    networks:
-      - app-network
+      - LOCUST_HOST=http://api:8000
+    depends_on:
+      - api
+    command: locust -f tests/locustfile.py --host=http://api:8000 --web-host=0.0.0.0
 
-networks:
-  app-network:
-    driver: bridge
-
-# To run multiple API instances for load balancing:
-# docker-compose up --scale api=3
+volumes:
+  model_data:
+  upload_data:

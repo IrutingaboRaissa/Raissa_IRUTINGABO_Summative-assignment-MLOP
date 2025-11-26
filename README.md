@@ -2,7 +2,11 @@
 
 A complete Machine Learning Operations (MLOps) pipeline for skin cancer classification using deep learning, with deployment, monitoring, scaling, and automated retraining capabilities.
 
-## Video Demo
+## 🌐 Live Demo
+
+**Deployed Application**: [https://raissa-irutingabo-summative-assignment.onrender.com](https://raissa-irutingabo-summative-assignment.onrender.com)
+
+## 🎥 Video Demo
 
 **YouTube Link**: [TO BE ADDED - Record once system is fully tested]
 
