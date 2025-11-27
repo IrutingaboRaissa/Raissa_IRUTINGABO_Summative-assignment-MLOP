@@ -2,11 +2,13 @@
 
 A complete Machine Learning Operations (MLOps) pipeline for skin cancer classification using deep learning, with deployment, monitoring, scaling, and automated retraining capabilities.
 
-## 🌐 Live Demo
+## Live Demo
 
-**Deployed Application**: [https://raissa-irutingabo-summative-assignment.onrender.com](https://raissa-irutingabo-summative-assignment.onrender.com)
+**Deployed API**: [https://raissa-irutingabo-summative-assignment-t6f0.onrender.com](https://raissa-irutingabo-summative-assignment-t6f0.onrender.com)
 
-## 🎥 Video Demo
+**Streamlit Dashboard**: [https://irutingaboraissa-raissa-irutingabo-summative-assign-app-eg0sqe.streamlit.app/](https://irutingaboraissa-raissa-irutingabo-summative-assign-app-eg0sqe.streamlit.app/)
+
+## Video Demo
 
 **Watch the demo here**: [https://youtu.be/lM3-LncOA3Y](https://youtu.be/lM3-LncOA3Y)
 
@@ -471,7 +473,17 @@ Invoke-RestMethod -Uri http://localhost:8000/metrics -Method Get | ConvertTo-Jso
 
 Load testing evaluates system performance under high concurrent user loads.
 
-**📊 For detailed load testing instructions and results template, see [LOAD_TESTING.md](LOAD_TESTING.md)**
+### Load Test Results
+
+![Locust Start Page](locust_start_page.png.png)
+
+![Locust Statistics](locust_statistics.png.png)
+
+![Locust Charts](locust_charts.png.png)
+
+![Locust Failures](locust_failures.png.png)
+
+**For detailed load testing instructions, see [LOAD_TESTING.md](LOAD_TESTING.md)**
 
 ### Quick Start
 
