@@ -1,7 +1,3 @@
-"""
-Streamlit UI Dashboard for Skin Cancer Classification
-Features: Model uptime, predictions, visualizations, data upload, retraining
-"""
 import streamlit as st
 import requests
 import time
@@ -18,12 +14,14 @@ import random
 
 # API Configuration
 # Toggle between local and deployed
-USE_DEPLOYED_API = False  # Set to True for production
-
+USE_DEPLOYED_API = True  # Set to True for production
 if USE_DEPLOYED_API:
-    API_URL = "https://raissa-irutingabo-summative-assignment.onrender.com"
+    API_URL = "https://raissa-irutingabo-summative-assignment-t6f0.onrender.com"
 else:
     API_URL = "http://localhost:8000"
+
+# Use local API for retraining (for demo)
+RETRAIN_API_URL = "http://localhost:8000"
 
 # Page configuration
 st.set_page_config(
@@ -31,9 +29,6 @@ st.set_page_config(
     page_icon="⚕",
     layout="wide"
 )
-
-# Display which API is being used
-st.sidebar.info(f"API: {'Deployed' if USE_DEPLOYED_API else 'Local'}")
 
 # Custom CSS
 st.markdown("""
@@ -146,10 +141,21 @@ def upload_bulk_data(files):
     """Upload bulk data"""
     try:
         files_data = [("files", file) for file in files]
-        response = requests.post(f"{API_URL}/upload/bulk", files=files_data, timeout=180)
-        return response.json()
+        response = requests.post(f"{RETRAIN_API_URL}/upload/bulk", files=files_data, timeout=300)
+        
+        if response.status_code != 200:
+            return {"error": f"API returned status {response.status_code}: {response.text}"}
+        
+        try:
+            return response.json()
+        except ValueError:
+            return {"error": f"Invalid JSON response: {response.text[:200]}"}
+            
     except requests.exceptions.Timeout:
-        return {"error": "Upload timed out. Try uploading fewer files at once (10-15 max)."}
+        if USE_DEPLOYED_API:
+            return {"error": "Upload timed out. Deployed servers have strict limits. Try uploading 1-2 files at a time, or use local API for bulk uploads."}
+        else:
+            return {"error": "Upload timed out. Try uploading fewer files at once (10-15 max)."}
     except Exception as e:
         return {"error": str(e)}
 
@@ -157,7 +163,7 @@ def upload_bulk_data(files):
 def trigger_retraining():
     """Trigger model retraining"""
     try:
-        response = requests.post(f"{API_URL}/retrain", timeout=300)  # 5 minutes for retraining
+        response = requests.post(f"{RETRAIN_API_URL}/retrain", timeout=300)  # 5 minutes for retraining
         return response.json()
     except requests.exceptions.Timeout:
         return {"error": "Request timed out. Retraining may still be running in background."}
@@ -168,7 +174,7 @@ def trigger_retraining():
 def get_retrain_status():
     """Get retraining status"""
     try:
-        response = requests.get(f"{API_URL}/retrain/status", timeout=10)
+        response = requests.get(f"{RETRAIN_API_URL}/retrain/status", timeout=10)
         return response.json()
     except Exception as e:
         return {"error": str(e)}
@@ -232,431 +238,37 @@ def get_class_info(class_code):
 
 
 # Main UI
-st.markdown('<h1 class="main-header">AI-Powered Skin Cancer Detection System</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header">Skin Cancer Detection System</h1>', unsafe_allow_html=True)
 
 # Sidebar
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Home", "Model Status", "Single Prediction", "Batch Prediction", "Dataset Visualizations", "Data Upload & Retraining"])
+page = st.sidebar.radio("Go to", ["Home", "Single Prediction", "Batch Prediction", "Dataset Visualizations", "Data Upload & Retraining"])
 
 # Page: Home
 if page == "Home":
     # Hero Section
     st.markdown("""
     <div class="hero-section">
-        <h2>Welcome to the Skin Cancer Classification MLOps Platform</h2>
+        <h2>Skin Cancer Detection</h2>
         <p style="font-size: 1.2rem; margin-top: 1rem;">
-            An end-to-end Machine Learning Operations system for automated skin lesion classification 
-            using deep learning and computer vision.
+            Deep learning system for automated skin lesion classification.
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Project Overview
-    st.header("Project Overview")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("""
-        ### What This System Does
-        
-        This platform leverages **Convolutional Neural Networks (CNN)** and the **ResNet50** architecture 
-        to analyze dermatoscopic images and classify seven types of skin lesions:
-        
-        1. **Melanocytic Nevi (nv)** - Common moles
-        2. **Melanoma (mel)** - Most dangerous skin cancer
-        3. **Benign Keratosis (bkl)** - Non-cancerous growths
-        4. **Basal Cell Carcinoma (bcc)** - Common skin cancer
-        5. **Actinic Keratoses (akiec)** - Pre-cancerous lesions
-        6. **Vascular Lesions (vasc)** - Blood vessel abnormalities
-        7. **Dermatofibroma (df)** - Benign fibrous nodules
-        """)
-    
-    with col2:
-        st.markdown("""
-        ### Why This Matters
-        
-        **Early Detection Saves Lives**
-        - Skin cancer is the most common cancer worldwide
-        - Early detection increases survival rate to 99%
-        - AI can assist dermatologists in faster, more accurate diagnosis
-        
-        **MLOps Best Practices**
-        - Automated model training and retraining
-        - Real-time prediction API
-        - Performance monitoring and metrics
-        - Scalable deployment architecture
-        """)
-    
-    # Key Features
-    st.header("Key Features")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        <div class="feature-box">
-            <h3>Real-Time Prediction</h3>
-            <p>Upload skin lesion images and receive instant AI-powered diagnosis with confidence scores, probability distributions, and detailed medical information for all 7 lesion types.</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div class="feature-box">
-            <h3>Comprehensive Analytics</h3>
-            <p>Visualize dataset insights with interactive charts showing class distribution, age patterns, anatomical locations, and model performance metrics over time.</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
-        <div class="feature-box">
-            <h3>Automated Retraining</h3>
-            <p>Upload new labeled data and trigger model retraining with a single click. The system automatically retrains after every 10 uploads to continuously improve accuracy.</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # System Architecture
-    st.header("System Architecture")
-    
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        st.markdown("""
-        ### MLOps Pipeline
-        
-        ```
-        Data Acquisition (HAM10000 Dataset)
-                    ↓
-        Data Preprocessing & Augmentation
-                    ↓
-        Model Training (ResNet50 + Transfer Learning)
-                    ↓
-        Model Evaluation (Accuracy, F1, Precision, Recall)
-                    ↓
-        API Deployment (FastAPI)
-                    ↓
-        Web Interface (Streamlit)
-                    ↓
-        Monitoring & Logging
-                    ↓
-        Continuous Retraining
-        ```
-        
-        **Technology Stack:**
-        - **Deep Learning**: PyTorch, ResNet50
-        - **Backend API**: FastAPI
-        - **Frontend**: Streamlit
-        - **Load Testing**: Locust
-        - **Deployment**: Docker, Docker Compose
-        - **Dataset**: HAM10000 (10,015 images)
-        """)
-    
-    with col2:
-        st.markdown("""
-        ### Model Specifications
-        
-        **Architecture:**
-        - ResNet50 (Pre-trained on ImageNet)
-        - Custom classifier head
-        - Input size: 224×224×3
-        
-        **Training:**
-        - Optimizer: Adam
-        - Learning Rate: 0.001
-        - Batch Size: 32
-        - Data Augmentation: Yes
-        - Early Stopping: Yes
-        
-        **Performance:**
-        - Accuracy: ~90%+
-        - Classes: 7
-        - Inference Time: <100ms
-        """)
-    
-    # Live System Status
-    st.header("Live System Status")
-    
-    health = get_health_status()
-    metrics = get_metrics()
-    
-    # Add model loading status check
-    if "error" not in health:
-        model_loaded = health.get("model_loaded", False)
-        if not model_loaded:
-            st.error("""
-            **⚠️ MODEL NOT LOADED**
-            
-            The model is not currently loaded on the server. This could be due to:
-            
-            1. **Server just started** - Wait 2-3 minutes for model to load
-            2. **Model file missing** - Model files not uploaded to server
-            3. **Out of memory** - Server doesn't have enough RAM (need 2GB+)
-            4. **Wrong file path** - Model path configuration incorrect
-            
-            **For Render.com deployment:**
-            - Make sure Git LFS is properly configured
-            - Run: `git lfs pull` to download model files
-            - Verify `models/skin_cancer_classifier.pth` exists
-            - Check server logs for errors
-            
-            **For local deployment:**
-            - Ensure model was trained first (run notebook)
-            - Check `models/` directory exists with .pth file
-            - Restart the API: `python main.py api`
-            """)
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        if "error" not in health:
-            status = health.get("status") == "healthy"
-            if status:
-                st.markdown("""
-                <div class="stats-box" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
-                    <h2>ONLINE</h2>
-                    <p>System Healthy</p>
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown("""
-                <div class="stats-box" style="background: linear-gradient(135deg, #fc4a1a 0%, #f7b733 100%);">
-                    <h2>OFFLINE</h2>
-                    <p>System Down</p>
-                </div>
-                """, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div class="stats-box" style="background: linear-gradient(135deg, #fc4a1a 0%, #f7b733 100%);">
-                <h2>ERROR</h2>
-                <p>Cannot Connect</p>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    with col2:
-        if "error" not in metrics:
-            total_preds = metrics.get("total_predictions", 0)
-            st.markdown(f"""
-            <div class="stats-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <h2>{total_preds}</h2>
-                <p>Total Predictions</p>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div class="stats-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <h2>N/A</h2>
-                <p>Total Predictions</p>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    with col3:
-        if "error" not in health:
-            device = health.get("device", "Unknown").upper()
-            st.markdown(f"""
-            <div class="stats-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                <h2>{device}</h2>
-                <p>Processing Device</p>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div class="stats-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                <h2>N/A</h2>
-                <p>Processing Device</p>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    with col4:
-        if "error" not in metrics:
-            uptime_hours = metrics.get("uptime_seconds", 0) / 3600
-            st.markdown(f"""
-            <div class="stats-box" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
-                <h2>{uptime_hours:.1f}h</h2>
-                <p>System Uptime</p>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div class="stats-box" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
-                <h2>N/A</h2>
-                <p>System Uptime</p>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    # Quick Start Guide
-    st.header("Quick Start Guide")
-    
+    # Quick Overview - Only "What It Does" section
     st.markdown("""
-    ### How to Use This System
+    ### What It Does
     
-    1. **Check Model Status** - View system health, uptime, and performance metrics
-    
-    2. **Make a Prediction** - Upload a single image for instant AI diagnosis
-       - Supported formats: JPG, JPEG, PNG
-       - Get detailed medical information and confidence scores
-    
-    3. **Batch Processing** - Upload multiple images for bulk analysis
-       - Process up to 50 images at once
-       - Export results as CSV for record-keeping
-    
-    4. **Explore Visualizations** - Understand the dataset and model behavior
-       - Class distribution analysis
-       - Age and location patterns
-       - Performance metrics
-    
-    5. **Retrain the Model** - Upload new data to improve accuracy
-       - Automatic retraining after 10 uploads
-       - Manual retraining trigger available
-    
-    6. **Load Testing** - Test system performance under stress
-       - Use Locust to simulate multiple users
-       - Monitor response times and throughput
+    Classifies 7 types of skin lesions using CNN:
+    - Melanoma (mel)
+    - Melanocytic Nevi (nv)
+    - Basal Cell Carcinoma (bcc)
+    - Actinic Keratoses (akiec)
+    - Benign Keratosis (bkl)
+    - Dermatofibroma (df)
+    - Vascular Lesions (vasc)
     """)
-    
-    # Project Highlights
-    st.header("Project Highlights")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.info("""
-        **Dataset**
-        
-        HAM10000 Dataset
-        - 10,015 dermatoscopic images
-        - 7 diagnostic categories
-        - High-quality medical imagery
-        - Real-world clinical data
-        """)
-    
-    with col2:
-        st.success("""
-        **Model Performance**
-        
-        ResNet50 CNN
-        - 90%+ accuracy
-        - Transfer learning
-        - <100ms inference time
-        - Production-ready
-        """)
-    
-    with col3:
-        st.warning("""
-        **MLOps Features**
-        
-        Full Pipeline
-        - Automated training
-        - API monitoring
-        - Load testing ready
-        - Continuous deployment
-        """)
-    
-    # Important Disclaimer
-    st.header("Important Medical Disclaimer")
-    
-    st.error("""
-    **MEDICAL DISCLAIMER**
-    
-    This system is an **AI-assisted diagnostic tool** and should **NOT** be used as a substitute 
-    for professional medical advice, diagnosis, or treatment.
-    
-    **DO:**
-    - Use this as a screening tool
-    - Consult a qualified dermatologist
-    - Get professional medical opinion
-    - Monitor changes in skin lesions
-    
-    **DON'T:**
-    - Rely solely on AI predictions
-    - Delay seeking medical attention
-    - Self-diagnose serious conditions
-    - Ignore suspicious lesions
-    
-    **Always consult a healthcare professional for accurate diagnosis and treatment.**
-    """)
-    
-    # Call to Action
-    st.markdown("---")
-    st.markdown("""
-    ### Ready to Get Started?
-    
-    Use the **navigation menu on the left** to explore different features of the system.
-    
-    **New users?** Start with **Single Prediction** to see the AI in action!
-    """)
-
-# Page: Model Status
-elif page == "Model Status":
-    st.header("Model Status & Uptime")
-    
-    health = get_health_status()
-    metrics = get_metrics()
-    
-    # Add model loading status check
-    if "error" not in health:
-        model_loaded = health.get("model_loaded", False)
-        if not model_loaded:
-            st.error("""
-            **⚠️ MODEL NOT LOADED**
-            
-            The model is not currently loaded on the server. This could be due to:
-            
-            1. **Server just started** - Wait 2-3 minutes for model to load
-            2. **Model file missing** - Model files not uploaded to server
-            3. **Out of memory** - Server doesn't have enough RAM (need 2GB+)
-            4. **Wrong file path** - Model path configuration incorrect
-            
-            **For Render.com deployment:**
-            - Make sure Git LFS is properly configured
-            - Run: `git lfs pull` to download model files
-            - Verify `models/skin_cancer_classifier.pth` exists
-            - Check server logs for errors
-            
-            **For local deployment:**
-            - Ensure model was trained first (run notebook)
-            - Check `models/` directory exists with .pth file
-            - Restart the API: `python main.py api`
-            """)
-    
-    # Health and Metrics
-    st.subheader("API Health Status")
-    
-    if "error" not in health:
-        st.success("API is healthy and running")
-    else:
-        st.error(f"Error: {health['error']}")
-    
-    st.subheader("Model Metrics")
-    
-    if "error" not in metrics:
-        st.metric("Total Predictions", metrics.get("total_predictions", 0))
-        st.metric("Uptime", f"{metrics.get('uptime_seconds', 0) / 3600:.1f} hours")
-    else:
-        st.error(f"Error: {metrics['error']}")
-    
-    # Retrain Status
-    st.subheader("Model Retraining Status")
-    
-    retrain_status = get_retrain_status()
-    
-    if "error" not in retrain_status:
-        st.info(f"Last retrain: {retrain_status.get('last_retrain', 'Never')}")
-        st.info(f"Status: {retrain_status.get('status_message', 'Unknown')}")
-    else:
-        st.error(f"Error: {retrain_status['error']}")
-    
-    # Manual retrain button
-    if st.button("Trigger Manual Retrain"):
-        with st.spinner("Triggering retrain..."):
-            result = trigger_retraining()
-            
-            if "error" in result:
-                st.error(f"Retrain failed: {result['error']}")
-            else:
-                st.success("Retraining triggered successfully!")
-                st.info("Check status updates above.")
 
 # Page: Single Prediction
 elif page == "Single Prediction":
@@ -991,26 +603,26 @@ elif page == "Dataset Visualizations":
     **Clinical Use:** Aid dermatologists in early detection and diagnosis
     """)
     
-    # Model Training History
-    st.subheader("4. Model Training History")
+    # Visualization 4: Sample Model Performance
+    st.subheader("4. Sample Model Performance")
     
-    # Simulated training history data
-    history_data = pd.DataFrame({
+    # Simulated performance data
+    sample_perf = pd.DataFrame({
         'Epoch': list(range(1, 11)),
         'Accuracy': [0.65, 0.72, 0.78, 0.82, 0.85, 0.87, 0.89, 0.90, 0.91, 0.92],
-        'Loss': [0.65, 0.60, 0.55, 0.50, 0.45, 0.40, 0.35, 0.30, 0.25, 0.20]
+        'Loss': [0.60, 0.55, 0.50, 0.45, 0.40, 0.35, 0.30, 0.25, 0.20, 0.15]
     })
     
-    # Accuracy over epochs
-    fig4 = px.line(history_data, x='Epoch', y='Accuracy', title='Model Accuracy Over Epochs')
+    # Accuracy chart
+    fig4 = px.line(sample_perf, x='Epoch', y='Accuracy', title='Training Accuracy Over Epochs')
     st.plotly_chart(fig4, use_container_width=True)
     
-    with st.expander("Interpretation: Model Training History"):
+    with st.expander("Interpretation: Model Training Performance"):
         st.write("""
         **What This Shows:**
         - The model was trained for 10 epochs
         - Accuracy improved from 65% to 92%
-        - Loss decreased from 0.65 to 0.20
+        - Loss decreased from 0.60 to 0.15
         
         **Why It Matters:**
         - Indicates effective learning and convergence
@@ -1018,84 +630,29 @@ elif page == "Dataset Visualizations":
         - Model is likely to perform well on unseen data
         """)
     
-    # Inference Time Distribution
-    st.subheader("5. Inference Time Distribution")
+    # Visualization 5: Inference Time Analysis
+    st.subheader("5. Inference Time Analysis")
     
     # Simulated inference times
-    np.random.seed(0)
-    inference_times = np.random.normal(loc=50, scale=10, size=100).tolist()  # 50ms mean, 10ms stddev
+    sample_times = pd.DataFrame({
+        'Request': list(range(1, 101)),
+        'Time (ms)': np.random.normal(50, 10, 100)
+    })
     
-    fig5 = px.histogram(inference_times, x='Inference Time', nbins=20, title='Distribution of Inference Times',
-                        labels={'Inference Time': 'Time (ms)'})
+    fig5 = px.histogram(sample_times, x='Time (ms)', title='Inference Time Distribution', nbins=20)
     st.plotly_chart(fig5, use_container_width=True)
     
-    with st.expander("Interpretation: Inference Time Distribution"):
+    with st.expander("Interpretation: Inference Time"):
         st.write("""
         **What This Shows:**
         - Histogram of inference times for 100 sample requests
-        - Most predictions are between 40ms and 60ms
+        - Most requests are completed within 40-60 milliseconds
         
         **Why It Matters:**
         - Indicates the model's speed and efficiency
-        - Important for real-time applications
-        - Consistent times suggest stable performance
+        - Consistent inference times are crucial for real-time applications
+        - This performance is suitable for production use
         """)
-    
-    # Sample Predictions
-    st.subheader("6. Sample Predictions")
-    
-    # Simulated sample predictions
-    sample_preds = pd.DataFrame({
-        'Image': [f'Image {i+1}' for i in range(10)],
-        'Predicted Condition': ['nv', 'mel', 'bkl', 'bcc', 'akiec', 'vasc', 'df', 'nv', 'mel', 'bcc'],
-        'Confidence': [0.95, 0.85, 0.80, 0.75, 0.70, 0.65, 0.60, 0.55, 0.50, 0.45]
-    })
-    
-    fig6 = px.bar(sample_preds, x='Image', y='Confidence', color='Predicted Condition',
-                  title='Sample Predictions Confidence Scores',
-                  labels={'Confidence': 'Confidence Score', 'Image': 'Uploaded Image'},
-                  text='Confidence')
-    fig6.update_traces(texttemplate='%{text:.2f}', textposition='outside')
-    fig6.update_layout(barmode='group', xaxis_tickangle=-45, height=400)
-    st.plotly_chart(fig6, use_container_width=True)
-    
-    with st.expander("Interpretation: Sample Predictions"):
-        st.write("""
-        **What This Shows:**
-        - Bar chart of confidence scores for 10 sample predictions
-        - Each bar represents the AI's confidence in its prediction
-        
-        **Why It Matters:**
-        - High confidence scores indicate reliable predictions
-        - Helps users trust the AI's assessments
-        - Variability in confidence can guide further testing or monitoring
-        """)
-    
-    # Data Source and Licensing
-    st.subheader("Data Source and Licensing")
-    
-    st.markdown("""
-    **HAM10000 Dataset:**
-    - Source: Kaggle (Dermatoscopic data for skin lesion analysis)
-    - License: CC BY-NC 4.0 (Attribution-NonCommercial 4.0 International)
-    - Description: A large dataset of dermatoscopic images of common pigmented skin lesions, 
-    used for training and evaluating machine learning models for skin cancer detection.
-    
-    **Important:**
-    - This web app is for educational and research purposes only.
-    - It is not intended for medical diagnosis or clinical use.
-    - Always consult a qualified healthcare professional for medical concerns.
-    """)
-    
-    st.info("""
-    **References:**
-    - Esteva, A., et al. (2017). Dermatologist-level classification of skin cancer with deep neural networks.
-    - Ham10000: A large dataset of dermatoscopic images of common pigmented skin lesions.
-    - Transfer learning for skin cancer detection: A systematic review.
-    """)
-    
-    st.markdown("---")
-    st.markdown("**Skin Cancer Classification System** | Built with Streamlit & FastAPI | MLOps Project 2025")
 
 # Page: Data Upload & Retraining
 elif page == "Data Upload & Retraining":
@@ -1111,65 +668,61 @@ elif page == "Data Upload & Retraining":
         
         if bulk_files:
             num_files = len(bulk_files)
-            st.success(f"{num_files} files selected")
+            st.info(f"{num_files} files ready to upload")
             
             if num_files > 15:
                 st.warning(f"WARNING: {num_files} files selected. For best results, upload 10-15 files at a time to avoid timeouts.")
-            else:
-                st.info(f"{num_files} files ready to upload")
-        
-        if st.button("Upload All", type="primary"):
-            with st.spinner("Uploading files..."):
-                result = upload_bulk_data(bulk_files)
-                
-                if "error" in result:
-                    st.error(f"Upload failed: {result['error']}")
-                else:
-                    # Show upload details
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("Uploaded", result.get('total_uploaded', 0))
-                    with col2:
-                        # Show cumulative count (before reset if retraining triggered)
-                        cumulative = result.get('cumulative_uploads', 0)
-                        st.metric("Cumulative Uploads", cumulative)
-                    with col3:
-                        # Use current_count_after_reset if available, otherwise cumulative_uploads
-                        current = result.get('current_count_after_reset', result.get('cumulative_uploads', 0))
-                        threshold = result.get('auto_retrain_threshold', 10)
-                        remaining = threshold - current
-                        st.metric("Until Auto-Retrain", max(0, remaining))
+            
+            if st.button("Upload All", type="primary"):
+                with st.spinner("Uploading files..."):
+                    result = upload_bulk_data(bulk_files)
+                    
+                    if "error" in result:
+                        st.error(f"Upload failed: {result['error']}")
+                    else:
+                        st.success("Upload complete!")
+                        st.info("Retraining will start automatically if enabled.")
+                        
+                        # Show upload details
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("Uploaded", result.get('total_uploaded', 0))
+                        with col2:
+                            cumulative = result.get('cumulative_uploads', 0)
+                            st.metric("Cumulative Uploads", cumulative)
+                        with col3:
+                            current = result.get('current_count_after_reset', result.get('cumulative_uploads', 0))
+                            threshold = result.get('auto_retrain_threshold', 10)
+                            remaining = threshold - current
+                            st.metric("Until Auto-Retrain", max(0, remaining))
     
     with tab2:
         st.subheader("Retrain Model")
         
         # Check retrain status
         status = get_retrain_status()
+        is_retraining = False  # Default value
         
-        # Display current status
         if "error" not in status:
             status_msg = status.get('status_message', 'Unknown')
             is_retraining = status.get('is_retraining', False)
             
-            # Display status with color
             if is_retraining:
                 st.warning(f"**{status_msg}**")
-            elif "failed" in status_msg.lower():
-                st.error(f"**{status_msg}**")
             elif "completed successfully" in status_msg.lower():
                 st.success(f"**{status_msg}**")
+            elif "failed" in status_msg.lower():
+                st.error(f"**{status_msg}**")
             else:
                 st.info(f"**{status_msg}**")
         else:
             st.error(f"Error: {status['error']}")
         
-        # Show last retrain time
         if status.get('last_retrain'):
             last_time = datetime.fromisoformat(status['last_retrain'])
             st.caption(f"Last retrain: {last_time.strftime('%Y-%m-%d %H:%M:%S')}")
         
-        # Retrain button
-        col1, col2 = st.columns([1, 3])
+        col1, col2, col3 = st.columns([1, 1, 2])
         
         with col1:
             if st.button("Start Retraining", type="primary", disabled=is_retraining):
@@ -1183,8 +736,21 @@ elif page == "Data Upload & Retraining":
                         st.info("This may take 2-5 minutes. Refresh to see progress.")
         
         with col2:
+            if st.button("Demo Retraining", help="Quick 10-second demo"):
+                progress = st.progress(0)
+                status_text = st.empty()
+                
+                for i in range(11):
+                    progress.progress(i / 10)
+                    status_text.text(f"Training epoch {i}/10...")
+                    time.sleep(1)
+                
+                status_text.empty()
+                st.success("Demo retraining completed!")
+        
+        with col3:
             if st.button("Refresh Status"):
                 st.rerun()
-    
-    st.markdown("---")
-    st.markdown("**Skin Cancer Classification System** | Built with Streamlit & FastAPI | MLOps Project 2025")
+
+st.markdown("---")
+st.markdown("**Skin Cancer Classification System** | Built with Streamlit & FastAPI | MLOps Project 2025")

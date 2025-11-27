@@ -7,6 +7,7 @@ import os
 from io import BytesIO
 from PIL import Image
 import json
+import time
 
 
 class ComprehensiveAPIUser(HttpUser):
@@ -307,6 +308,42 @@ class StressTestUser(HttpUser):
     @task(1)
     def health_check(self):
         self.client.get("/health")
+
+
+class APIUser(HttpUser):
+    wait_time = between(2, 5)  # Increase wait time between requests
+    
+    @task(5)
+    def health_check(self):
+        """Health check endpoint - most frequent"""
+        with self.client.get("/health", catch_response=True) as response:
+            if response.status_code == 200:
+                response.success()
+            elif response.status_code == 502:
+                response.failure("502 Bad Gateway - Cold start")
+            else:
+                response.failure(f"Unexpected status: {response.status_code}")
+    
+    @task(2)
+    def predict_image(self):
+        """Predict with sample image"""
+        # Add retry logic for cold starts
+        max_retries = 2
+        for attempt in range(max_retries):
+            try:
+                files = {'file': ('test.jpg', get_sample_image(), 'image/jpeg')}
+                with self.client.post("/predict", files=files, timeout=60, catch_response=True) as response:
+                    if response.status_code == 200:
+                        response.success()
+                        break
+                    elif response.status_code == 502 and attempt < max_retries - 1:
+                        time.sleep(5)  # Wait for cold start
+                        continue
+                    else:
+                        response.failure(f"Failed after {attempt+1} attempts")
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    print(f"Failed: {e}")
 
 
 """

@@ -8,7 +8,7 @@ A complete Machine Learning Operations (MLOps) pipeline for skin cancer classifi
 
 ## 🎥 Video Demo
 
-**YouTube Link**: [TO BE ADDED - Record once system is fully tested]
+**Watch the demo here**: [https://youtu.be/lM3-LncOA3Y](https://youtu.be/lM3-LncOA3Y)
 
 ## Project Description
 
