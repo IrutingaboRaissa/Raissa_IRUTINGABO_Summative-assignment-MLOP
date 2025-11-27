@@ -4,6 +4,15 @@ services:
     env: docker
     repo: https://github.com/IrutingaboRaissa/Raissa_IRUTINGABO_Summative-assignment-MLOP
     branch: main
+    healthCheckPath: /health
     envVars:
       - key: GIT_LFS_ENABLED
         value: 1
+      - key: WORKERS
+        value: 1
+      - key: TIMEOUT
+        value: 60
+    # Add auto-scaling (requires paid tier)
+    # scaling:
+    #   minInstances: 1
+    #   maxInstances: 3

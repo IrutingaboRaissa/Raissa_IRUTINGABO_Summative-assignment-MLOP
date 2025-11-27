@@ -1,0 +1,15 @@
+name: Keep API Warm
+
+on:
+  schedule:
+    # Run every 10 minutes
+    - cron: '*/10 * * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  warmup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API
+        run: |
+          curl -f https://raissa-irutingabo-summative-assignment-t6f0.onrender.com/health || exit 0
